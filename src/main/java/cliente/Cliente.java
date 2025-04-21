@@ -14,10 +14,62 @@ import modelo.Ticket;
 import java.io.*;
 import java.net.Socket;
 import java.util.List;
+import java.util.Properties;
 
 public class Cliente extends Application {
-    private static final String HOST = "localhost";
-    private static final int PUERTO = 5000;
+    private static String HOST;
+    private static int PUERTO;
+
+    // Función mejorada para cargar configuración desde properties
+    private static void cargarConfiguracion() {
+        Properties prop = new Properties();
+        InputStream input = null;
+
+        try {
+            // Intentamos cargar el archivo desde el directorio de trabajo
+            File configFile = new File("config.properties");
+            if (configFile.exists()) {
+                input = new FileInputStream(configFile);
+            } else {
+                // Si no existe en el directorio, intentamos cargarlo del classpath
+                input = Cliente.class.getClassLoader().getResourceAsStream("config.properties");
+                if (input == null) {
+                    throw new FileNotFoundException("Archivo config.properties no encontrado");
+                }
+            }
+
+            prop.load(input);
+
+            // Obtenemos los valores con valores por defecto
+            HOST = prop.getProperty("servidor.ip", "localhost");
+            String puertoStr = prop.getProperty("servidor.puerto", "5000");
+
+            try {
+                PUERTO = Integer.parseInt(puertoStr);
+            } catch (NumberFormatException e) {
+                System.err.println("Puerto no válido en config.properties, usando 5000 por defecto");
+                PUERTO = 5000;
+            }
+
+        } catch (IOException ex) {
+            System.err.println("No se pudo cargar config.properties, usando valores por defecto. Error: " + ex.getMessage());
+            HOST = "localhost";
+            PUERTO = 5000;
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    System.err.println("Error al cerrar el archivo de configuración: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    // Bloque estático para cargar la configuración al iniciar la clase
+    static {
+        cargarConfiguracion();
+    }
 
     @Override
     public void start(Stage primaryStage) {
@@ -119,7 +171,6 @@ public class Cliente extends Application {
         }
 
         private void crearUI() {
-            // Configuración de columnas
             TableColumn<Ticket, String> colCodigo = new TableColumn<>("Código");
             colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
 
@@ -132,7 +183,6 @@ public class Cliente extends Application {
             tablaTickets = new TableView<>();
             tablaTickets.getColumns().addAll(colCodigo, colServicio, colEstado);
 
-            // Botones de acción
             Button btnActualizar = new Button("Actualizar Lista");
             btnActualizar.setOnAction(e -> actualizarTickets());
 
