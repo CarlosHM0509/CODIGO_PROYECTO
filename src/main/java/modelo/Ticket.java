@@ -2,30 +2,32 @@ package modelo;
 
 import java.io.Serializable;
 
-/**
- * Clase que representa un Ticket en el sistema
- * Implementa Serializable para permitir su transmisión por red
- */
 public class Ticket implements Serializable {
-    private static final long serialVersionUID = 1L;  // Versión para control de serialización
-    private static int contador = 1;  // Contador estático para números de ticket
-    private int numero;  // Número único del ticket
-    private String servicio;  // Tipo de servicio solicitado
-    private String estado;  // Estado actual del ticket (pendiente, atendiendo, atendido)
+    private static final long serialVersionUID = 1L;
+    private static int contador = 1;
+    private final int numero;  // Hacer final ya que no debería cambiar
+    private final String servicio;  // Hacer final ya que no debería cambiar
+    private String estado;
+    private String mesaAsignada;
+    private transient String codigoCache;  // Cache para el código generado
 
-    // Constructor que inicializa un nuevo ticket
     public Ticket(String servicio) {
-        this.servicio = servicio;
-        this.numero = contador++;  // Asigna número y luego incrementa el contador
-        this.estado = "pendiente";  // Estado inicial siempre es pendiente
+        if (servicio == null || servicio.trim().isEmpty()) {
+            throw new IllegalArgumentException("El servicio no puede ser nulo o vacío");
+        }
+        this.servicio = servicio.trim();
+        this.numero = contador++;
+        this.estado = "pendiente";
+        this.mesaAsignada = "Sin asignar";
     }
 
-    // Genera un código único para el ticket (ej: "S-1")
     public String getCodigo() {
-        return servicio.substring(0, 1).toUpperCase() + "-" + numero;
+        if (codigoCache == null) {
+            codigoCache = servicio.substring(0, 1).toUpperCase() + "-" + String.format("%04d", numero);
+        }
+        return codigoCache;
     }
 
-    // Getters y setters básicos
     public String getServicio() {
         return servicio;
     }
@@ -35,12 +37,50 @@ public class Ticket implements Serializable {
     }
 
     public void setEstado(String estado) {
-        this.estado = estado;
+        if (estado == null || estado.trim().isEmpty()) {
+            throw new IllegalArgumentException("El estado no puede ser nulo o vacío");
+        }
+        this.estado = estado.trim();
     }
 
-    // Representación textual del ticket
+    public String getMesaAsignada() {
+        return mesaAsignada;
+    }
+
+    public void setMesaAsignada(String mesaAsignada) {
+        if (mesaAsignada == null || mesaAsignada.trim().isEmpty()) {
+            this.mesaAsignada = "Sin asignar";
+        } else {
+            this.mesaAsignada = mesaAsignada.trim();
+        }
+    }
+
+    public static void resetContador(int nuevoValor) {
+        if (nuevoValor <= 0) {
+            throw new IllegalArgumentException("El contador debe ser mayor que cero");
+        }
+        contador = nuevoValor;
+    }
+
     @Override
     public String toString() {
-        return getCodigo() + " - " + servicio + " [" + estado + "]";
+        return String.format("%s - %s [%s] (Mesa: %s)",
+                getCodigo(),
+                servicio,
+                estado,
+                mesaAsignada);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Ticket ticket = (Ticket) o;
+        return numero == ticket.numero && servicio.equals(ticket.servicio);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * numero + servicio.hashCode();
     }
 }

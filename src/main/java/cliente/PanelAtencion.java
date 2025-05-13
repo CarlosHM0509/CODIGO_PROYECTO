@@ -13,21 +13,38 @@ import java.util.List;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
-
-/**
- * Panel de atención de tickets para la interfaz gráfica
- */
 public class PanelAtencion extends VBox {
-    private static final String HOST = "localhost";  // Dirección del servidor
-    private static final int PUERTO = 5000;  // Puerto del servidor
-    private TableView<Ticket> tablaTickets;  // Tabla para mostrar tickets
+    private static final String HOST = "localhost";
+    private static final int PUERTO = 5000;
+    private TableView<Ticket> tablaTickets;
+    private TextField cajaInput;
+    private TicketDisplay display;
+    private Stage stageOperador;
 
     public PanelAtencion() {
         super(10);
         setPadding(new Insets(15));
+
+        // ✅ Usar el Singleton correctamente
+        display = TicketDisplay.getInstance();
+        display.mostrar();
+
         crearUI();
-        actualizarTicketsPeriodicamente();  // ahora se actualiza solo
+        actualizarTicketsPeriodicamente();
+    }
+
+    public void mostrarVentanaOperador() {
+        if (stageOperador == null) {
+            stageOperador = new Stage();
+            Scene escena = new Scene(this, 600, 400);
+            stageOperador.setScene(escena);
+            stageOperador.setTitle("Panel de Operador - Banco");
+            stageOperador.setOnCloseRequest(e -> System.exit(0));
+            stageOperador.show();
+        }
     }
 
     private void actualizarTicketsPeriodicamente() {
@@ -38,10 +55,7 @@ public class PanelAtencion extends VBox {
         timeline.play();
     }
 
-
-    // Configura los elementos de la interfaz
     private void crearUI() {
-        // Configuración de columnas para la tabla
         TableColumn<Ticket, String> colCodigo = new TableColumn<>("Código");
         colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
 
@@ -51,67 +65,99 @@ public class PanelAtencion extends VBox {
         TableColumn<Ticket, String> colEstado = new TableColumn<>("Estado");
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
 
-        // Crea la tabla y añade columnas
-        tablaTickets = new TableView<>();
-        tablaTickets.getColumns().addAll(colCodigo, colServicio, colEstado);
+        TableColumn<Ticket, String> colMesa = new TableColumn<>("Mesa Asignada");
+        colMesa.setCellValueFactory(new PropertyValueFactory<>("mesaAsignada"));
 
-        // Botones con sus acciones
-        Button btnActualizar = new Button("Actualizar Lista");
-        btnActualizar.setOnAction(e -> actualizarTickets());
+        tablaTickets = new TableView<>();
+        tablaTickets.getColumns().addAll(colCodigo, colServicio, colEstado, colMesa);
+
+        cajaInput = new TextField();
+        cajaInput.setPromptText("Ingrese número de caja/mesa");
+        cajaInput.setPrefWidth(150);
 
         Button btnAtender = new Button("Atender Ticket");
-        btnAtender.setOnAction(e -> cambiarEstadoTicket("atendiendo"));
+        btnAtender.setOnAction(e -> atenderTicket());
 
-        Button btnFinalizar = new Button("Finalizar Ticket");
-        btnFinalizar.setOnAction(e -> cambiarEstadoTicket("atendido"));
+        Button btnFinalizar = new Button("Finalizar Atención");
+        btnFinalizar.setOnAction(e -> finalizarTicket());
 
-        // Panel horizontal para botones
-        HBox botonera = new HBox(10, btnActualizar, btnAtender, btnFinalizar);
-        // Añade todos los componentes al panel principal
-        getChildren().addAll(new Label("Tickets Pendientes:"), tablaTickets, botonera);
+        HBox panelBotones = new HBox(10, cajaInput, btnAtender, btnFinalizar);
+
+        getChildren().addAll(
+                new Label("Sistema de Gestión de Tickets - Banco"),
+                tablaTickets,
+                panelBotones
+        );
     }
 
-    // Actualiza la lista de tickets desde el servidor
+    private void atenderTicket() {
+        Ticket seleccionado = tablaTickets.getSelectionModel().getSelectedItem();
+        String mesa = cajaInput.getText().trim();
+
+        if (seleccionado == null) {
+            mostrarAlerta("Por favor seleccione un ticket");
+            return;
+        }
+
+        if (mesa.isEmpty()) {
+            mostrarAlerta("Ingrese un número de caja/mesa");
+            return;
+        }
+
+        try (Socket socket = new Socket(HOST, PUERTO);
+             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
+
+            out.writeObject("atender");
+            out.writeObject(seleccionado.getCodigo());
+            out.writeObject(mesa);
+
+            // ✅ Actualizar pantalla del cliente
+            display.actualizarTicket(seleccionado.getCodigo(), mesa);
+            actualizarTickets();
+
+        } catch (IOException e) {
+            mostrarAlerta("Error al atender ticket: " + e.getMessage());
+        }
+    }
+
+    private void finalizarTicket() {
+        Ticket seleccionado = tablaTickets.getSelectionModel().getSelectedItem();
+
+        if (seleccionado == null) {
+            mostrarAlerta("Por favor seleccione un ticket");
+            return;
+        }
+
+        try (Socket socket = new Socket(HOST, PUERTO);
+             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
+
+            out.writeObject("finalizar");
+            out.writeObject(seleccionado.getCodigo());
+            actualizarTickets();
+
+        } catch (IOException e) {
+            mostrarAlerta("Error al finalizar ticket: " + e.getMessage());
+        }
+    }
+
     private void actualizarTickets() {
         try (Socket socket = new Socket(HOST, PUERTO);
              ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
              ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
 
-            out.writeObject("listar");  // Solicita lista de tickets
-            List<Ticket> tickets = (List<Ticket>) in.readObject();  // Recibe la lista
-            // Convierte a ObservableList para la tabla
+            out.writeObject("listar");
+            List<Ticket> tickets = (List<Ticket>) in.readObject();
             ObservableList<Ticket> items = FXCollections.observableArrayList(tickets);
-            tablaTickets.setItems(items);  // Asigna a la tabla
+            tablaTickets.setItems(items);
 
         } catch (IOException | ClassNotFoundException e) {
-            mostrarAlerta("Error al cargar tickets: " + e.getMessage());
+            mostrarAlerta("Error al actualizar tickets: " + e.getMessage());
         }
     }
 
-    // Cambia el estado de un ticket seleccionado
-    private void cambiarEstadoTicket(String nuevoEstado) {
-        Ticket seleccionado = tablaTickets.getSelectionModel().getSelectedItem();
-        if (seleccionado != null) {
-            try (Socket socket = new Socket(HOST, PUERTO);
-                 ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
-
-                // Envía comando según el nuevo estado
-                out.writeObject(nuevoEstado.equals("atendiendo") ? "atender" : "finalizar");
-                out.writeObject(seleccionado.getCodigo());  // Envía código del ticket
-                actualizarTickets();  // Refresca la lista
-
-            } catch (IOException e) {
-                mostrarAlerta("Error al cambiar estado: " + e.getMessage());
-            }
-        } else {
-            mostrarAlerta("Seleccione un ticket primero");
-        }
-    }
-
-    // Muestra mensajes de alerta al usuario
     private void mostrarAlerta(String mensaje) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Advertencia");
+        alert.setTitle("Aviso");
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();

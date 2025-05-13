@@ -50,15 +50,9 @@ public class Servidor {
                 // Switch para manejar diferentes acciones
                 switch (accion) {
                     case "crear":
-                        // Creación de nuevo ticket
                         String servicio = (String) entrada.readObject();
                         Ticket ticket = new Ticket(servicio);
                         tickets.add(ticket);
-                        // Registra en el log
-                        CreadorLogs.log("NUEVO TICKET - " + ticket.getCodigo() +
-                                " | Servicio: " + servicio +
-                                " | Estado: " + ticket.getEstado());
-                        // Devuelve el ticket creado al cliente
                         salida.writeObject(ticket);
                         break;
 
@@ -75,12 +69,21 @@ public class Servidor {
                         salida.writeObject(pendientes);
                         break;
 
+                    // En el case "atender" del servidor:
                     case "atender":
-                        // Cambia estado a "atendiendo"
                         String codigoAtender = (String) entrada.readObject();
-                        cambiarEstado(codigoAtender, "atendiendo");
+                        String mesa = (String) entrada.readObject(); // Recibe el número de mesa
+
+                        tickets.stream()
+                                .filter(t -> t.getCodigo().equals(codigoAtender))
+                                .findFirst()
+                                .ifPresent(t -> {
+                                    t.setEstado("atendiendo");
+                                    t.setMesaAsignada(mesa);
+                                });
+
                         CreadorLogs.log("TICKET ATENDIDO - " + codigoAtender +
-                                " | Nuevo estado: atendiendo");
+                                " | Mesa: " + mesa);
                         break;
 
                     case "finalizar":
