@@ -27,13 +27,17 @@ public class PanelAtencion extends VBox {
         super(10);
         setPadding(new Insets(15));
         crearUI();
-        actualizarTickets();
+        actualizarTicketsPeriodicamente();  // ahora se actualiza solo
+    }
 
-        // Agregar actualización automática cada 5 segundos
-        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(5), e -> actualizarTickets()));
+    private void actualizarTicketsPeriodicamente() {
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.seconds(3), e -> actualizarTickets())
+        );
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
     }
+
 
     // Configura los elementos de la interfaz
     private void crearUI() {

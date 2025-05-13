@@ -20,10 +20,8 @@ public class Cliente extends Application {
     private static String HOST;
     private static int PUERTO;
 
-    // Referencia para actualizar la lista desde otros métodos
     private PanelAtencion panelAtencion;
 
-    // Cargar configuración desde properties
     private static void cargarConfiguracion() {
         Properties prop = new Properties();
         InputStream input = null;
@@ -40,7 +38,6 @@ public class Cliente extends Application {
             }
 
             prop.load(input);
-
             HOST = prop.getProperty("servidor.ip", "localhost");
             String puertoStr = prop.getProperty("servidor.puerto", "5000");
 
@@ -76,14 +73,12 @@ public class Cliente extends Application {
 
         TabPane tabPane = new TabPane();
 
-        // Pestaña 1
         Tab tabGenerar = new Tab("Generar Ticket");
         tabGenerar.setContent(crearPanelGeneracion());
         tabGenerar.setClosable(false);
 
-        // Pestaña 2
         Tab tabAtencion = new Tab("Atención de Tickets");
-        panelAtencion = new PanelAtencion(); // Guardar referencia
+        panelAtencion = new PanelAtencion();
         tabAtencion.setContent(panelAtencion);
         tabAtencion.setClosable(false);
 
@@ -143,11 +138,9 @@ public class Cliente extends Application {
                 Ticket ticket = (Ticket) respuesta;
                 resultadoLabel.setText("Ticket generado: " + ticket.getCodigo());
 
-                // Actualizar automáticamente la tabla en la pestaña de atención
                 if (panelAtencion != null) {
                     panelAtencion.actualizarTickets();
                 }
-
             } else {
                 resultadoLabel.setText("Error: Respuesta inesperada del servidor");
             }
@@ -165,7 +158,7 @@ public class Cliente extends Application {
         launch(args);
     }
 
-    // Clase interna: Panel de atención
+    // Clase interna que representa la pestaña de atención
     class PanelAtencion extends VBox {
         private TableView<Ticket> tablaTickets;
 
@@ -174,6 +167,7 @@ public class Cliente extends Application {
             setPadding(new Insets(15));
             crearUI();
             actualizarTickets();
+            iniciarActualizacionAutomatica();
         }
 
         private void crearUI() {
@@ -242,6 +236,14 @@ public class Cliente extends Application {
             alert.setHeaderText(null);
             alert.setContentText(mensaje);
             alert.showAndWait();
+        }
+
+        private void iniciarActualizacionAutomatica() {
+            javafx.animation.Timeline timeline = new javafx.animation.Timeline(
+                    new javafx.animation.KeyFrame(javafx.util.Duration.seconds(3), e -> actualizarTickets())
+            );
+            timeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
+            timeline.play();
         }
     }
 }
