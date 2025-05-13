@@ -20,18 +20,19 @@ public class Cliente extends Application {
     private static String HOST;
     private static int PUERTO;
 
-    // Función mejorada para cargar configuración desde properties
+    // Referencia para actualizar la lista desde otros métodos
+    private PanelAtencion panelAtencion;
+
+    // Cargar configuración desde properties
     private static void cargarConfiguracion() {
         Properties prop = new Properties();
         InputStream input = null;
 
         try {
-            // Intentamos cargar el archivo desde el directorio de trabajo
             File configFile = new File("config.properties");
             if (configFile.exists()) {
                 input = new FileInputStream(configFile);
             } else {
-                // Si no existe en el directorio, intentamos cargarlo del classpath
                 input = Cliente.class.getClassLoader().getResourceAsStream("config.properties");
                 if (input == null) {
                     throw new FileNotFoundException("Archivo config.properties no encontrado");
@@ -40,14 +41,13 @@ public class Cliente extends Application {
 
             prop.load(input);
 
-            // Obtenemos los valores con valores por defecto
             HOST = prop.getProperty("servidor.ip", "localhost");
             String puertoStr = prop.getProperty("servidor.puerto", "5000");
 
             try {
                 PUERTO = Integer.parseInt(puertoStr);
             } catch (NumberFormatException e) {
-                System.err.println("Puerto no válido en config.properties, usando 5000 por defecto");
+                System.err.println("Puerto no válido, usando 5000 por defecto");
                 PUERTO = 5000;
             }
 
@@ -60,13 +60,12 @@ public class Cliente extends Application {
                 try {
                     input.close();
                 } catch (IOException e) {
-                    System.err.println("Error al cerrar el archivo de configuración: " + e.getMessage());
+                    System.err.println("Error al cerrar el archivo: " + e.getMessage());
                 }
             }
         }
     }
 
-    // Bloque estático para cargar la configuración al iniciar la clase
     static {
         cargarConfiguracion();
     }
@@ -77,14 +76,15 @@ public class Cliente extends Application {
 
         TabPane tabPane = new TabPane();
 
-        // Pestaña 1: Generación de Tickets
+        // Pestaña 1
         Tab tabGenerar = new Tab("Generar Ticket");
         tabGenerar.setContent(crearPanelGeneracion());
         tabGenerar.setClosable(false);
 
-        // Pestaña 2: Panel de Atención
+        // Pestaña 2
         Tab tabAtencion = new Tab("Atención de Tickets");
-        tabAtencion.setContent(new PanelAtencion());
+        panelAtencion = new PanelAtencion(); // Guardar referencia
+        tabAtencion.setContent(panelAtencion);
         tabAtencion.setClosable(false);
 
         tabPane.getTabs().addAll(tabGenerar, tabAtencion);
@@ -142,6 +142,12 @@ public class Cliente extends Application {
             if (respuesta instanceof Ticket) {
                 Ticket ticket = (Ticket) respuesta;
                 resultadoLabel.setText("Ticket generado: " + ticket.getCodigo());
+
+                // Actualizar automáticamente la tabla en la pestaña de atención
+                if (panelAtencion != null) {
+                    panelAtencion.actualizarTickets();
+                }
+
             } else {
                 resultadoLabel.setText("Error: Respuesta inesperada del servidor");
             }
@@ -159,7 +165,7 @@ public class Cliente extends Application {
         launch(args);
     }
 
-    // Clase interna para el panel de atención
+    // Clase interna: Panel de atención
     class PanelAtencion extends VBox {
         private TableView<Ticket> tablaTickets;
 
@@ -197,7 +203,7 @@ public class Cliente extends Application {
             getChildren().addAll(new Label("Tickets Pendientes:"), tablaTickets, botonera);
         }
 
-        private void actualizarTickets() {
+        public void actualizarTickets() {
             try (Socket socket = new Socket(HOST, PUERTO);
                  ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
                  ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {

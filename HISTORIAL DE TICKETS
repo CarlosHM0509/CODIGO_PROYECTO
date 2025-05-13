@@ -7,3 +7,55 @@
 [2025-04-20 22:19:03] NUEVO TICKET - C-4 | Servicio: Cuenta Monetaria | Estado: pendiente
 [2025-04-20 22:19:03] NUEVO TICKET - C-5 | Servicio: Cuenta Monetaria | Estado: pendiente
 [2025-04-20 22:19:03] NUEVO TICKET - C-6 | Servicio: Cuenta Monetaria | Estado: pendiente
+[2025-04-20 22:42:06] NUEVO TICKET - C-1 | Servicio: Cuenta Monetaria | Estado: pendiente
+[2025-04-20 22:42:06] NUEVO TICKET - C-2 | Servicio: Cuenta Monetaria | Estado: pendiente
+[2025-04-20 22:44:06] NUEVO TICKET - C-1 | Servicio: Cuenta Monetaria | Estado: pendiente
+[2025-04-20 22:44:06] NUEVO TICKET - C-2 | Servicio: Cuenta Monetaria | Estado: pendiente
+[2025-04-20 22:44:06] NUEVO TICKET - C-3 | Servicio: Cuenta Monetaria | Estado: pendiente
+[2025-04-20 22:44:07] NUEVO TICKET - C-4 | Servicio: Cerrar Cuenta | Estado: pendiente
+[2025-04-20 22:44:08] NUEVO TICKET - C-5 | Servicio: Cuenta Monetaria | Estado: pendiente
+[2025-04-20 22:44:10] NUEVO TICKET - C-6 | Servicio: Cuenta Ahorro | Estado: pendiente
+[2025-04-20 22:44:11] NUEVO TICKET - T-7 | Servicio: Tarjeta de Credito | Estado: pendiente
+[2025-04-20 22:44:11] NUEVO TICKET - T-8 | Servicio: Tarjeta de Credito | Estado: pendiente
+[2025-04-20 22:44:15] Ticket T-7 cambiado a estado: atendiendo
+[2025-04-20 22:44:15] TICKET ATENDIDO - T-7 | Nuevo estado: atendiendo
+[2025-04-20 22:44:16] Ticket C-5 cambiado a estado: atendiendo
+[2025-04-20 22:44:16] TICKET ATENDIDO - C-5 | Nuevo estado: atendiendo
+[2025-04-20 22:44:17] Ticket C-1 cambiado a estado: atendiendo
+[2025-04-20 22:44:17] TICKET ATENDIDO - C-1 | Nuevo estado: atendiendo
+[2025-04-20 22:44:18] Ticket C-6 cambiado a estado: atendiendo
+[2025-04-20 22:44:18] TICKET ATENDIDO - C-6 | Nuevo estado: atendiendo
+[2025-04-20 22:44:19] Ticket T-8 cambiado a estado: atendiendo
+[2025-04-20 22:44:19] TICKET ATENDIDO - T-8 | Nuevo estado: atendiendo
+[2025-04-20 22:44:20] Ticket T-8 cambiado a estado: atendido
+[2025-04-20 22:44:20] TICKET FINALIZADO - T-8 | Nuevo estado: atendido
+[2025-04-20 22:44:53] NUEVO TICKET - C-1 | Servicio: Cuenta Monetaria | Estado: pendiente
+[2025-04-20 22:44:53] NUEVO TICKET - C-2 | Servicio: Cuenta Monetaria | Estado: pendiente
+[2025-04-20 22:44:55] NUEVO TICKET - T-3 | Servicio: Tarjeta de Credito | Estado: pendiente
+[2025-04-20 22:44:55] NUEVO TICKET - T-4 | Servicio: Tarjeta de Credito | Estado: pendiente
+[2025-04-20 22:52:00] Ticket C-2 cambiado a estado: atendiendo
+[2025-04-20 22:52:00] TICKET ATENDIDO - C-2 | Nuevo estado: atendiendo
+[2025-04-20 22:52:02] Ticket T-3 cambiado a estado: atendiendo
+[2025-04-20 22:52:02] TICKET ATENDIDO - T-3 | Nuevo estado: atendiendo
+[2025-04-20 22:52:13] Ticket T-3 cambiado a estado: atendido
+[2025-04-20 22:52:13] TICKET FINALIZADO - T-3 | Nuevo estado: atendido
+[2025-04-20 22:52:14] Ticket T-4 cambiado a estado: atendido
+[2025-04-20 22:52:14] TICKET FINALIZADO - T-4 | Nuevo estado: atendido
+[2025-04-20 22:52:15] Ticket C-2 cambiado a estado: atendido
+[2025-04-20 22:52:15] TICKET FINALIZADO - C-2 | Nuevo estado: atendido
+[2025-04-20 22:52:16] Ticket C-1 cambiado a estado: atendido
+[2025-04-20 22:52:16] TICKET FINALIZADO - C-1 | Nuevo estado: atendido
+[2025-04-20 22:53:32] NUEVO TICKET - C-5 | Servicio: Cuenta Monetaria | Estado: pendiente
+[2025-04-20 22:53:32] NUEVO TICKET - C-6 | Servicio: Cuenta Monetaria | Estado: pendiente
+[2025-04-20 22:53:33] NUEVO TICKET - C-7 | Servicio: Cerrar Cuenta | Estado: pendiente
+[2025-04-20 22:53:34] NUEVO TICKET - C-8 | Servicio: Cerrar Cuenta | Estado: pendiente
+[2025-04-20 22:53:37] NUEVO TICKET - S-9 | Servicio: Servicio al Cliente | Estado: pendiente
+[2025-05-12 22:19:53] NUEVO TICKET - C-1 | Servicio: Cuenta Ahorro | Estado: pendiente
+[2025-05-12 22:19:58] NUEVO TICKET - S-2 | Servicio: Servicio al Cliente | Estado: pendiente
+[2025-05-12 22:20:00] NUEVO TICKET - C-3 | Servicio: Cuenta Ahorro | Estado: pendiente
+[2025-05-12 22:26:28] NUEVO TICKET - C-1 | Servicio: Cuenta Ahorro | Estado: pendiente
+[2025-05-12 22:26:31] NUEVO TICKET - C-2 | Servicio: Cerrar Cuenta | Estado: pendiente
+[2025-05-12 22:26:33] NUEVO TICKET - S-3 | Servicio: Servicio al Cliente | Estado: pendiente
+[2025-05-12 22:26:35] NUEVO TICKET - T-4 | Servicio: Tarjeta de Credito | Estado: pendiente
+[2025-05-12 22:38:21] NUEVO TICKET - T-1 | Servicio: Tarjeta de Credito | Estado: pendiente
+[2025-05-12 22:38:22] NUEVO TICKET - S-2 | Servicio: Servicio al Cliente | Estado: pendiente
