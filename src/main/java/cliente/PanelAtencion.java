@@ -107,19 +107,16 @@ public class PanelAtencion extends VBox {
             out.writeObject(seleccionado.getCodigo());
             out.writeObject(mesa);
 
-            // Espera la lista actualizada de tickets
             List<Ticket> ticketsActualizados = (List<Ticket>) in.readObject();
-            // Actualiza la tabla con los nuevos datos
-            ObservableList<Ticket> items = FXCollections.observableArrayList(ticketsActualizados);
-            tablaTickets.setItems(items); // Actualiza la tabla
+            actualizarTabla(ticketsActualizados);
 
             TicketDisplay.getInstance().actualizarTicket(seleccionado.getCodigo(), mesa);
+            cajaInput.clear();
 
         } catch (IOException | ClassNotFoundException e) {
             mostrarAlerta("Error al atender ticket: " + e.getMessage());
         }
     }
-
 
     private void finalizarTicket() {
         Ticket seleccionado = tablaTickets.getSelectionModel().getSelectedItem();
@@ -136,11 +133,8 @@ public class PanelAtencion extends VBox {
             out.writeObject("finalizar");
             out.writeObject(seleccionado.getCodigo());
 
-            // Espera la lista actualizada de tickets después de finalizar
             List<Ticket> ticketsActualizados = (List<Ticket>) in.readObject();
-            // Actualiza la tabla con los nuevos datos
-            ObservableList<Ticket> items = FXCollections.observableArrayList(ticketsActualizados);
-            tablaTickets.setItems(items); // Actualiza la tabla
+            actualizarTabla(ticketsActualizados);
 
         } catch (IOException | ClassNotFoundException e) {
             mostrarAlerta("Error al finalizar ticket: " + e.getMessage());
@@ -152,15 +146,23 @@ public class PanelAtencion extends VBox {
              ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
              ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
 
-            out.writeObject("listar");
+            out.writeObject("listar"); // <<< CAMBIO AQUÍ
             List<Ticket> tickets = (List<Ticket>) in.readObject();
-            ObservableList<Ticket> items = FXCollections.observableArrayList(tickets);
-            tablaTickets.setItems(items);
+            actualizarTabla(tickets);
+
 
         } catch (IOException | ClassNotFoundException e) {
-            mostrarAlerta("Error al actualizar tickets: " + e.getMessage());
+            // Evitamos mostrar alerta cada 3 segundos, solo logueamos para depuración
+            System.err.println("Error al actualizar tickets: " + e.getMessage());
         }
     }
+
+    public void actualizarTabla(List<Ticket> tickets) {
+        tablaTickets.getItems().clear(); // <--- Añade esta línea
+        ObservableList<Ticket> items = FXCollections.observableArrayList(tickets);
+        tablaTickets.setItems(items);
+    }
+
 
     private void mostrarAlerta(String mensaje) {
         Alert alert = new Alert(Alert.AlertType.WARNING);

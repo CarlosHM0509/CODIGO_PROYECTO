@@ -17,7 +17,7 @@ public class Servidor {
 
         while (true) {
             Socket socket = serverSocket.accept();  // Espera una conexión entrante
-            new Thread(new ClienteHandler(socket)).start();  // Crea un nuevo hilo para manejar la conexión
+            new Thread(new ClienteHandler(socket)).start();  // Hilo para manejar cada cliente
         }
     }
 
@@ -35,24 +35,28 @@ public class Servidor {
                     ObjectInputStream entrada = new ObjectInputStream(socket.getInputStream());
                     ObjectOutputStream salida = new ObjectOutputStream(socket.getOutputStream())
             ) {
-                String accion = (String) entrada.readObject();  // Lee la acción del cliente
+                String accion = (String) entrada.readObject();  // Acción solicitada
 
                 switch (accion) {
                     case "crear":
-                        // Crea un nuevo ticket
+                        // Crear un nuevo ticket
                         String servicio = (String) entrada.readObject();
                         Ticket ticket = new Ticket(servicio);
                         tickets.add(ticket);
-                        salida.writeObject(ticket);  // Envía el ticket creado al cliente
+                        salida.writeObject(ticket);  // Devuelve ticket al cliente
                         break;
 
                     case "listar":
-                        // Envía la lista completa de tickets al cliente
-                        salida.writeObject(new ArrayList<>(tickets));
+                        // Enviar tickets que están pendientes o en atención
+                        List<Ticket> activos = tickets.stream()
+                                .filter(t -> t.getEstado().equals("pendiente") || t.getEstado().equals("atendiendo"))
+                                .collect(Collectors.toList());
+                        salida.writeObject(activos);
                         break;
 
+
                     case "listarPendientes":
-                        // Filtra y envía solo los tickets pendientes
+                        // Solo tickets pendientes
                         List<Ticket> pendientes = tickets.stream()
                                 .filter(t -> t.getEstado().equals("pendiente"))
                                 .collect(Collectors.toList());
@@ -60,7 +64,7 @@ public class Servidor {
                         break;
 
                     case "atender":
-                        // Atender un ticket y asignar una mesa
+                        // Atender un ticket y asignarle una mesa/caja
                         String codigoAtender = (String) entrada.readObject();
                         String mesa = (String) entrada.readObject();
                         Ticket ticketAtendido = tickets.stream()
@@ -72,7 +76,6 @@ public class Servidor {
                             ticketAtendido.setEstado("atendiendo");
                             ticketAtendido.setMesaAsignada(mesa);
                             CreadorLogs.log("TICKET ATENDIDO - " + codigoAtender + " | Mesa: " + mesa);
-                            // Envía la lista actualizada de tickets
                             salida.writeObject(new ArrayList<>(tickets));
                         } else {
                             salida.writeObject("Ticket no encontrado");
@@ -80,7 +83,7 @@ public class Servidor {
                         break;
 
                     case "finalizar":
-                        // Finalizar el ticket
+                        // Finalizar atención del ticket
                         String codigoFinalizar = (String) entrada.readObject();
                         Ticket ticketFinalizado = tickets.stream()
                                 .filter(t -> t.getCodigo().equals(codigoFinalizar))
@@ -90,7 +93,6 @@ public class Servidor {
                         if (ticketFinalizado != null) {
                             ticketFinalizado.setEstado("atendido");
                             CreadorLogs.log("TICKET FINALIZADO - " + codigoFinalizar + " | Nuevo estado: atendido");
-                            // Envía la lista actualizada de tickets
                             salida.writeObject(new ArrayList<>(tickets));
                         } else {
                             salida.writeObject("Ticket no encontrado");
@@ -99,13 +101,14 @@ public class Servidor {
 
                     default:
                         salida.writeObject("Accion no reconocida");
+                        break;
                 }
 
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             } finally {
                 try {
-                    socket.close();  // Cierra el socket al finalizar la comunicación con el cliente
+                    socket.close();  // Cierra conexión
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

@@ -19,7 +19,7 @@ public class GeneradorTickets {
         stage.setTitle("Generar Nuevos Tickets");
 
         ComboBox<String> cbServicios = new ComboBox<>();
-        cbServicios.getItems().addAll("Retiro", "Depósito", "Consulta", "Pago", "Otros");
+        cbServicios.getItems().addAll("Retiro", "Depósito", "Servicio al Cliente", "Pago de Servicios", "Remesas");
         cbServicios.setPromptText("Seleccione servicio");
 
         Button btnGenerar = new Button("Generar Ticket");
