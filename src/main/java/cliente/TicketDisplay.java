@@ -13,21 +13,15 @@ public class TicketDisplay {
     private Label lblTicket;
     private Label lblMesa;
 
-    public static TicketDisplay getInstance() {
-        if (instance == null) {
-            instance = new TicketDisplay();
-        }
-        return instance;
-    }
-
     private TicketDisplay() {
-        // Inicializa el Stage en el constructor para evitar que sea null
         stage = new Stage();
         lblTicket = new Label("Esperando ticket...");
         lblTicket.setFont(new Font(24));
+        lblTicket.setStyle("-fx-text-fill: white;");
 
         lblMesa = new Label("");
         lblMesa.setFont(new Font(20));
+        lblMesa.setStyle("-fx-text-fill: white;");
 
         VBox root = new VBox(20, lblTicket, lblMesa);
         root.setAlignment(Pos.CENTER);
@@ -36,6 +30,13 @@ public class TicketDisplay {
 
         Scene scene = new Scene(root);
         stage.setScene(scene);
+    }
+
+    public static TicketDisplay getInstance() {
+        if (instance == null) {
+            instance = new TicketDisplay();
+        }
+        return instance;
     }
 
     public void mostrar() {
@@ -47,7 +48,5 @@ public class TicketDisplay {
     public void actualizarTicket(String codigoTicket, String mesa) {
         lblTicket.setText("Ticket: " + codigoTicket);
         lblMesa.setText("Diríjase a: Mesa " + mesa);
-        lblTicket.setStyle("-fx-text-fill: white;");
-        lblMesa.setStyle("-fx-text-fill: white;");
     }
 }

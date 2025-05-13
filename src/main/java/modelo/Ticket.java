@@ -5,11 +5,13 @@ import java.io.Serializable;
 public class Ticket implements Serializable {
     private static final long serialVersionUID = 1L;
     private static int contador = 1;
-    private final int numero;  // Hacer final ya que no debería cambiar
-    private final String servicio;  // Hacer final ya que no debería cambiar
+
+    private final int numero;  // número único
+    private final String servicio;  // tipo de servicio
     private String estado;
     private String mesaAsignada;
-    private transient String codigoCache;  // Cache para el código generado
+
+    private String codigoCache; // ya no es transient
 
     public Ticket(String servicio) {
         if (servicio == null || servicio.trim().isEmpty()) {
@@ -26,6 +28,11 @@ public class Ticket implements Serializable {
             codigoCache = servicio.substring(0, 1).toUpperCase() + "-" + String.format("%04d", numero);
         }
         return codigoCache;
+    }
+
+    // Solo si deseas permitir restaurar el código tras deserialización (no obligatorio)
+    public void setCodigoCache(String codigoCache) {
+        this.codigoCache = codigoCache;
     }
 
     public String getServicio() {
@@ -64,11 +71,8 @@ public class Ticket implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("%s - %s [%s] (Mesa: %s)",
-                getCodigo(),
-                servicio,
-                estado,
-                mesaAsignada);
+        return String.format("Código: %s | Servicio: %s | Estado: %s | Mesa: %s",
+                getCodigo(), servicio, estado, mesaAsignada);
     }
 
     @Override

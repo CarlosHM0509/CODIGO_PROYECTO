@@ -7,31 +7,23 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
-/**
- * Servidor principal que gestiona los tickets y las conexiones de clientes
- */
 public class Servidor {
     // Cola concurrente para almacenar tickets (segura para hilos)
     private static Queue<Ticket> tickets = new ConcurrentLinkedQueue<>();
 
     public static void main(String[] args) throws IOException {
-        // Crea el socket del servidor en el puerto 5000
         ServerSocket serverSocket = new ServerSocket(5000);
         System.out.println("Servidor iniciado en el puerto 5000...");
 
-        // Bucle infinito para aceptar conexiones
         while (true) {
-            Socket socket = serverSocket.accept();  // Espera conexión entrante
-            // Crea un nuevo hilo para manejar al cliente
-            new Thread(new ClienteHandler(socket)).start();
+            Socket socket = serverSocket.accept();  // Espera una conexión entrante
+            new Thread(new ClienteHandler(socket)).start();  // Crea un nuevo hilo para manejar la conexión
         }
     }
 
-    /**
-     * Clase interna que maneja la comunicación con cada cliente
-     */
+    // Clase interna que maneja la comunicación con cada cliente
     static class ClienteHandler implements Runnable {
-        private Socket socket;  // Socket de conexión con el cliente
+        private Socket socket;
 
         public ClienteHandler(Socket socket) {
             this.socket = socket;
@@ -40,79 +32,84 @@ public class Servidor {
         @Override
         public void run() {
             try (
-                    // Flujos de entrada/salida para comunicación con el cliente
                     ObjectInputStream entrada = new ObjectInputStream(socket.getInputStream());
                     ObjectOutputStream salida = new ObjectOutputStream(socket.getOutputStream())
             ) {
-                // Lee la acción solicitada por el cliente
-                String accion = (String) entrada.readObject();
+                String accion = (String) entrada.readObject();  // Lee la acción del cliente
 
-                // Switch para manejar diferentes acciones
                 switch (accion) {
                     case "crear":
+                        // Crea un nuevo ticket
                         String servicio = (String) entrada.readObject();
                         Ticket ticket = new Ticket(servicio);
                         tickets.add(ticket);
-                        salida.writeObject(ticket);
+                        salida.writeObject(ticket);  // Envía el ticket creado al cliente
                         break;
 
                     case "listar":
-                        // Envía lista completa de tickets
+                        // Envía la lista completa de tickets al cliente
                         salida.writeObject(new ArrayList<>(tickets));
                         break;
 
                     case "listarPendientes":
-                        // Filtra y envía solo tickets pendientes
+                        // Filtra y envía solo los tickets pendientes
                         List<Ticket> pendientes = tickets.stream()
                                 .filter(t -> t.getEstado().equals("pendiente"))
                                 .collect(Collectors.toList());
                         salida.writeObject(pendientes);
                         break;
 
-                    // En el case "atender" del servidor:
                     case "atender":
+                        // Atender un ticket y asignar una mesa
                         String codigoAtender = (String) entrada.readObject();
-                        String mesa = (String) entrada.readObject(); // Recibe el número de mesa
-
-                        tickets.stream()
+                        String mesa = (String) entrada.readObject();
+                        Ticket ticketAtendido = tickets.stream()
                                 .filter(t -> t.getCodigo().equals(codigoAtender))
                                 .findFirst()
-                                .ifPresent(t -> {
-                                    t.setEstado("atendiendo");
-                                    t.setMesaAsignada(mesa);
-                                });
+                                .orElse(null);
 
-                        CreadorLogs.log("TICKET ATENDIDO - " + codigoAtender +
-                                " | Mesa: " + mesa);
+                        if (ticketAtendido != null) {
+                            ticketAtendido.setEstado("atendiendo");
+                            ticketAtendido.setMesaAsignada(mesa);
+                            CreadorLogs.log("TICKET ATENDIDO - " + codigoAtender + " | Mesa: " + mesa);
+                            // Envía la lista actualizada de tickets
+                            salida.writeObject(new ArrayList<>(tickets));
+                        } else {
+                            salida.writeObject("Ticket no encontrado");
+                        }
                         break;
 
                     case "finalizar":
-                        // Cambia estado a "atendido"
+                        // Finalizar el ticket
                         String codigoFinalizar = (String) entrada.readObject();
-                        cambiarEstado(codigoFinalizar, "atendido");
-                        CreadorLogs.log("TICKET FINALIZADO - " + codigoFinalizar +
-                                " | Nuevo estado: atendido");
+                        Ticket ticketFinalizado = tickets.stream()
+                                .filter(t -> t.getCodigo().equals(codigoFinalizar))
+                                .findFirst()
+                                .orElse(null);
+
+                        if (ticketFinalizado != null) {
+                            ticketFinalizado.setEstado("atendido");
+                            CreadorLogs.log("TICKET FINALIZADO - " + codigoFinalizar + " | Nuevo estado: atendido");
+                            // Envía la lista actualizada de tickets
+                            salida.writeObject(new ArrayList<>(tickets));
+                        } else {
+                            salida.writeObject("Ticket no encontrado");
+                        }
                         break;
 
                     default:
-                        // Acción no reconocida
                         salida.writeObject("Accion no reconocida");
                 }
 
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
+            } finally {
+                try {
+                    socket.close();  // Cierra el socket al finalizar la comunicación con el cliente
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-        }
-
-        // Método auxiliar para cambiar estado de un ticket
-        private void cambiarEstado(String codigo, String nuevoEstado) {
-            tickets.stream()
-                    .filter(t -> t.getCodigo().equals(codigo))
-                    .findFirst()
-                    .ifPresent(t -> {
-                        t.setEstado(nuevoEstado);
-                        CreadorLogs.log("Ticket " + codigo + " cambiado a estado: " + nuevoEstado);
-                    });
         }
     }
 }

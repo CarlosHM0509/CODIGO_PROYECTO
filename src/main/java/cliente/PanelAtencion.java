@@ -21,19 +21,14 @@ public class PanelAtencion extends VBox {
     private static final int PUERTO = 5000;
     private TableView<Ticket> tablaTickets;
     private TextField cajaInput;
-    private TicketDisplay display;
     private Stage stageOperador;
+    private Timeline actualizador;
 
     public PanelAtencion() {
         super(10);
         setPadding(new Insets(15));
-
-        // ✅ Usar el Singleton correctamente
-        display = TicketDisplay.getInstance();
-        display.mostrar();
-
         crearUI();
-        actualizarTicketsPeriodicamente();
+        iniciarActualizacionPeriodica();
     }
 
     public void mostrarVentanaOperador() {
@@ -47,12 +42,12 @@ public class PanelAtencion extends VBox {
         }
     }
 
-    private void actualizarTicketsPeriodicamente() {
-        Timeline timeline = new Timeline(
+    private void iniciarActualizacionPeriodica() {
+        actualizador = new Timeline(
                 new KeyFrame(Duration.seconds(3), e -> actualizarTickets())
         );
-        timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.play();
+        actualizador.setCycleCount(Timeline.INDEFINITE);
+        actualizador.play();
     }
 
     private void crearUI() {
@@ -105,20 +100,26 @@ public class PanelAtencion extends VBox {
         }
 
         try (Socket socket = new Socket(HOST, PUERTO);
-             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
+             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+             ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
 
             out.writeObject("atender");
             out.writeObject(seleccionado.getCodigo());
             out.writeObject(mesa);
 
-            // ✅ Actualizar pantalla del cliente
-            display.actualizarTicket(seleccionado.getCodigo(), mesa);
-            actualizarTickets();
+            // Espera la lista actualizada de tickets
+            List<Ticket> ticketsActualizados = (List<Ticket>) in.readObject();
+            // Actualiza la tabla con los nuevos datos
+            ObservableList<Ticket> items = FXCollections.observableArrayList(ticketsActualizados);
+            tablaTickets.setItems(items); // Actualiza la tabla
 
-        } catch (IOException e) {
+            TicketDisplay.getInstance().actualizarTicket(seleccionado.getCodigo(), mesa);
+
+        } catch (IOException | ClassNotFoundException e) {
             mostrarAlerta("Error al atender ticket: " + e.getMessage());
         }
     }
+
 
     private void finalizarTicket() {
         Ticket seleccionado = tablaTickets.getSelectionModel().getSelectedItem();
@@ -129,13 +130,19 @@ public class PanelAtencion extends VBox {
         }
 
         try (Socket socket = new Socket(HOST, PUERTO);
-             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
+             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+             ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
 
             out.writeObject("finalizar");
             out.writeObject(seleccionado.getCodigo());
-            actualizarTickets();
 
-        } catch (IOException e) {
+            // Espera la lista actualizada de tickets después de finalizar
+            List<Ticket> ticketsActualizados = (List<Ticket>) in.readObject();
+            // Actualiza la tabla con los nuevos datos
+            ObservableList<Ticket> items = FXCollections.observableArrayList(ticketsActualizados);
+            tablaTickets.setItems(items); // Actualiza la tabla
+
+        } catch (IOException | ClassNotFoundException e) {
             mostrarAlerta("Error al finalizar ticket: " + e.getMessage());
         }
     }
